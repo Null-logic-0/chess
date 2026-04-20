@@ -49,7 +49,7 @@ defmodule ChessWeb.Layouts do
       </div>
     </header>
 
-    <main class="px-4 py-12 sm:px-6 lg:px-8">
+    <main class="px-4 pb-4 sm:px-6 lg:px-8">
       <div class="mx-auto w-full ">
         {render_slot(@inner_block)}
       </div>
