@@ -100,7 +100,7 @@ defmodule ChessWeb.GameLive.Show do
 
         socket =
           socket
-          |> assign(page_title: "jane_doe vs john_doe")
+          |> assign(page_title: "Match")
           |> assign(:game, game)
           |> assign(:my_id, my_id)
 
