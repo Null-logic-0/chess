@@ -1,6 +1,7 @@
 defmodule ChessWeb.GameLive.Show do
   use ChessWeb, :live_view
   alias Chess.Games
+  alias Chess.Messages
 
   def render(assigns) do
     ~H"""
@@ -41,22 +42,15 @@ defmodule ChessWeb.GameLive.Show do
           </div>
         </div>
 
-        <%!-- Controls --%>
-        <div class="flex gap-2 justify-center flex-wrap">
-          <button class="px-3 py-1.5 text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
-            ⟳ Flip
+        <div class="grid grid-cols-3 gap-4">
+          <button class="px-3 py-1.5 cursor-pointer text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
+            <.icon name="hero-arrow-uturn-down" class="size-4" /> Flip
           </button>
-          <button class="px-3 py-1.5 text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
-            ← Undo
+          <button class="px-2 py-1.5 cursor-pointer text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
+            <.icon name="hero-flag" class="size-4" /> Resign
           </button>
-          <button class="px-3 py-1.5 text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
-            ⚑ Resign
-          </button>
-          <button class="px-3 py-1.5 text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
-            = Draw
-          </button>
-          <button class="px-3 py-1.5 text-sm bg-accent text-accent-content rounded-field hover:opacity-90 transition-opacity">
-            ⬡ Analyze
+          <button class="px-2 py-1.5 cursor-pointer text-sm border border-base-300 rounded-field bg-base-100 text-base-content hover:bg-base-200 transition-colors">
+            <.icon name="hero-equals" class="size-4" /> Draw
           </button>
         </div>
 
@@ -79,59 +73,13 @@ defmodule ChessWeb.GameLive.Show do
         </div>
 
         <%!-- Chat --%>
-        <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
-          <div class="flex items-center justify-between px-4 py-2 border-b border-base-300 text-xs font-medium text-base-content/40 uppercase tracking-wider bg-base-200">
-            <span>Chat</span>
-          </div>
-
-          <%!-- Messages --%>
-          <div class="flex flex-col gap-1 p-3 h-36 overflow-y-auto">
-            <div class="chat chat-start">
-              <div class="chat-image avatar placeholder">
-                <div class="w-6 rounded-full bg-info/10 text-info text-xs flex items-center justify-center">
-                  JD
-                </div>
-              </div>
-              <div class="chat-bubble chat-bubble-ghost text-base-content text-xs py-1.5 px-3">
-                Good luck! 🤝
-              </div>
-            </div>
-            <div class="chat chat-end">
-              <div class="chat-image avatar placeholder">
-                <div class="w-6 rounded-full bg-success/10 text-success text-xs flex items-center justify-center">
-                  JD
-                </div>
-              </div>
-              <div class="chat-bubble chat-bubble-ghost text-base-content text-xs py-1.5 px-3">
-                You too, gl hf!
-              </div>
-            </div>
-            <div class="chat chat-start">
-              <div class="chat-image avatar placeholder">
-                <div class="w-6 rounded-full bg-info/10 text-info text-xs flex items-center justify-center">
-                  JD
-                </div>
-              </div>
-              <div class="chat-bubble chat-bubble-ghost text-base-content text-xs py-1.5 px-3">
-                Nice move 👀
-              </div>
-            </div>
-          </div>
-
-          <%!-- Input --%>
-          <div class="flex items-center gap-2 px-3 py-2 border-t border-base-300 bg-base-200">
-            <input
-              type="text"
-              placeholder="Say something..."
-              class="input input-sm flex-1 bg-base-100 border-base-300 text-base-content placeholder:text-base-content/30 focus:outline-none focus:border-primary text-xs"
-            />
-            <button class="btn btn-sm btn-primary px-3">
-              Send
-            </button>
-          </div>
-        </div>
-
-        <p class="text-center text-xs text-base-content/40 font-mono">White to move</p>
+        <.live_component
+          module={ChessWeb.Chat.ChatLiveComponent}
+          id="chat"
+          game={@game}
+          my_id={@my_id}
+          current_scope={@current_scope}
+        />
       </div>
     </Layouts.app>
     """
@@ -146,6 +94,10 @@ defmodule ChessWeb.GameLive.Show do
         {:ok, redirect(socket, to: "/")}
 
       game ->
+        if connected?(socket) do
+          Messages.subscribe_messages(slug)
+        end
+
         socket =
           socket
           |> assign(page_title: "jane_doe vs john_doe")
@@ -154,5 +106,20 @@ defmodule ChessWeb.GameLive.Show do
 
         {:ok, socket}
     end
+  end
+
+  # Chat events
+
+  def handle_info({:new_message, message}, socket) do
+    send_update(ChessWeb.Chat.ChatLiveComponent, id: "chat", new_message: message)
+    {:noreply, socket}
+  end
+
+  def handle_info({:flash, kind, message}, socket) do
+    {:noreply, put_flash(socket, kind, message)}
+  end
+
+  def handle_info(_msg, socket) do
+    {:noreply, socket}
   end
 end
