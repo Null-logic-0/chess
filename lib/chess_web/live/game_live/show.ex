@@ -8,7 +8,7 @@ defmodule ChessWeb.GameLive.Show do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="max-w-xl w-full mx-auto flex flex-col gap-3">
+      <div class="flex flex-col gap-3">
         <%!-- Opponent bar --%>
         <div class="flex items-center gap-3 p-3 bg-base-100 border border-base-300 rounded-box">
           <div class="w-9 h-9 rounded-full bg-info/10 text-info flex items-center justify-center text-sm font-medium shrink-0 overflow-hidden">

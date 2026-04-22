@@ -38,9 +38,20 @@ defmodule ChessWeb.LeaderboardLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="max-w-xl mx-auto flex flex-col gap-4 pb-8">
-        <h1 class="text-3xl font-bold text-base-content">{@page_title}</h1>
+      <div class="flex flex-col gap-4 pb-8">
+        <div class="flex items-center justify-between">
+          <h1 class="text-3xl font-bold text-base-content">
+            {@page_title}
+          </h1>
 
+          <button
+            type="button"
+            onclick="window.history.back()"
+            class="btn btn-sm btn-ghost text-base-content/60 hover:text-base-content"
+          >
+            ← Go back
+          </button>
+        </div>
         <.my_stats my_stats={@my_stats} current_scope={@current_scope} />
 
         <.error_state error={@error} />
