@@ -1,5 +1,34 @@
 defmodule ChessWeb.Leaderboard.LoadingState do
+  @moduledoc """
+  Provides a reusable loading skeleton for the leaderboard table.
+
+  This component is displayed while leaderboard data is being fetched.
+  It uses skeleton rows to preserve layout stability and improve perceived performance.
+  """
+
   use ChessWeb, :html
+
+  @doc """
+  Renders a loading skeleton for the leaderboard.
+
+  Displays placeholder rows that mimic the structure of the final leaderboard table
+  while data is being fetched from the server. This prevents layout shift and
+  improves user experience during loading states.
+
+  ## Attributes
+
+    * `:loading` - A boolean flag indicating whether the loading state should be shown.
+      When `true`, skeleton rows are rendered. When `false`, nothing is displayed.
+
+  ## Examples
+
+      <.loading_state loading={@loading} />
+
+  """
+
+  attr :loading, :boolean,
+    required: true,
+    doc: "Controls whether the loading skeleton is displayed."
 
   def loading_state(assigns) do
     ~H"""

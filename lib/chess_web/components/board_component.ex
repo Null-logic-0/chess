@@ -1,4 +1,15 @@
 defmodule ChessWeb.BoardComponent do
+  @moduledoc """
+  Renders an interactive chess board component.
+
+  This component is responsible for:
+    * Rendering a chess position from a FEN string
+    * Displaying pieces using image assets
+    * Highlighting selected squares and legal move hints
+    * Supporting board flipping (for black/white perspective)
+
+  It is designed for use inside LiveView-based chess gameplay.
+  """
   use ChessWeb, :html
 
   @files ~w(a b c d e f g h)
@@ -19,6 +30,32 @@ defmodule ChessWeb.BoardComponent do
     "p" => "/images/pawn_black.png"
   }
 
+  @doc """
+  Renders a chess board based on a FEN string.
+
+  Supports:
+    * Piece rendering
+    * Square selection highlighting
+    * Move hint visualization
+    * Board orientation flipping
+
+  ## Attributes
+
+    * `:fen` - FEN string representing the board state
+    * `:selected` - Currently selected square (e.g. "e4")
+    * `:hints` - List of highlighted squares (legal moves / suggestions)
+    * `:flipped` - Whether the board is flipped (black perspective)
+
+  ## Examples
+
+      <.board
+        fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+        selected="e2"
+        hints={["e3", "e4"]}
+        flipped={false}
+      />
+
+  """
   attr :fen, :string, required: true
   attr :selected, :string, default: nil
   attr :hints, :list, default: []
@@ -70,6 +107,12 @@ defmodule ChessWeb.BoardComponent do
     """
   end
 
+  @doc """
+  Converts a FEN string into a map of board squares to piece symbols.
+
+  Returns a map like:
+      %{"e4" => "P", "e5" => "k"}
+  """
   def fen_to_board(fen) do
     fen
     |> String.split(" ")

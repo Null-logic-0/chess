@@ -1,6 +1,57 @@
 defmodule ChessWeb.Chat.Messages do
+  @moduledoc """
+  Renders the chat message list for the chat interface.
+
+  This component displays streamed chat messages in real-time using
+  Phoenix LiveView streams. It also integrates an empty state component
+  when no messages are present and handles user-based message alignment.
+  """
   use ChessWeb, :html
   import ChessWeb.Chat.Empty
+
+  @doc """
+  Renders the chat message list.
+
+  Displays messages in a scrollable container using LiveView streams.
+  Messages are visually differentiated based on whether they belong to
+  the current user or other participants.
+
+  Also renders an empty state when there are no messages.
+
+  ## Attributes
+
+    * `:messages` - A LiveView stream of chat messages. Each message is expected
+      to include:
+        * `:id` (used for DOM tracking)
+        * `:user_id`
+        * `:content`
+        * `:user` (with `:full_name` and optional `:profile_image`)
+
+    * `:messages_count` - Integer representing total number of messages.
+
+    * `:my_id` - The current user's ID, used to align messages (start/end).
+
+  ## Examples
+
+      <.messages
+        messages={@streams.messages}
+        messages_count={length(@messages)}
+        my_id={@current_user.id}
+      />
+
+  """
+
+  attr :messages, :list,
+    required: true,
+    doc: "Streamed list of chat messages."
+
+  attr :messages_count, :integer,
+    required: true,
+    doc: "Total number of messages in the chat."
+
+  attr :my_id, :any,
+    required: true,
+    doc: "Current user ID used for message alignment."
 
   def messages(assigns) do
     ~H"""

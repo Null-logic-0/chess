@@ -1,9 +1,38 @@
 defmodule ChessWeb.Chat.ChatLiveComponent do
+  @moduledoc """
+  LiveComponent responsible for rendering and managing the in-game chat system.
+
+  This component handles:
+    * Streaming chat messages in real-time
+    * Sending new messages
+    * Maintaining local message state
+    * Coordinating form input and message list UI
+
+  It is designed to be embedded inside a game LiveView.
+  """
+
   use ChessWeb, :live_component
+
   import ChessWeb.Chat.ChatForm
   import ChessWeb.Chat.Messages
+
   alias Chess.Messages
 
+  @doc """
+  Renders the chat UI.
+
+  Combines the message list, empty state, and input form into a single
+  reusable chat component.
+
+  ## Attributes
+
+    * `:my_id` - Current user ID used for message alignment.
+    * `:messages` - Streamed list of chat messages.
+    * `:messages_count` - Total number of messages.
+    * `:message_form` - Phoenix form used for message input.
+    * `:myself` - LiveComponent reference used for event targeting.
+
+  """
   def render(assigns) do
     ~H"""
     <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
@@ -16,6 +45,11 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
     """
   end
 
+  @doc """
+  Initializes the component state.
+
+  Sets up an empty form, message counter, and an empty message stream.
+  """
   def mount(socket) do
     {:ok,
      socket
@@ -25,6 +59,21 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
      |> stream(:messages, [])}
   end
 
+  @doc """
+   Handles insertion of a newly received message into the stream.
+
+  Increments the local message counter and inserts the message into the UI stream.
+
+  Initializes or updates the chat component with game context.
+
+  If the game is already assigned, only user context is updated.
+  Otherwise, it loads existing messages for the game and initializes the stream.
+
+  ## Assigns expected
+    * `:game` - Current game context
+    * `:my_id` - Current user ID
+    * `:current_scope` - Authentication scope
+  """
   def update(%{new_message: message}, socket) do
     {:ok,
      socket
@@ -51,6 +100,11 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
     end
   end
 
+  @doc """
+  Handles sending a new chat message.
+
+  Creates a message in the database and clears the input field on success.
+  """
   def handle_event("send_message", %{"body" => body}, socket) do
     case Messages.create_message(socket.assigns.current_scope, socket.assigns.game.slug, %{
            content: body

@@ -1,5 +1,42 @@
 defmodule ChessWeb.Leaderboard.MyStats do
+  @moduledoc """
+  Displays the current user's personal leaderboard statistics.
+
+  This component highlights the authenticated user's rank and game performance,
+  including wins, losses, and draws. It is typically shown above the leaderboard
+  table to provide quick personal context.
+  """
   use ChessWeb, :html
+
+  @doc """
+  Renders the current user's leaderboard stats card.
+
+  Shows the user's avatar, name, rank, and game statistics (wins, losses, draws).
+  This component is only rendered when `my_stats` data is available.
+
+  ## Attributes
+
+    * `:my_stats` - A map or struct containing user leaderboard statistics:
+        * `:rank`
+        * `:wins`
+        * `:losses`
+        * `:draws`
+
+    * `:current_scope` - The current authentication scope containing the user.
+      Used to display user identity information (name and profile image).
+
+  ## Examples
+
+      <.my_stats my_stats={@my_stats} current_scope={@current_scope} />
+
+  """
+  attr :my_stats, :map,
+    required: true,
+    doc: "User leaderboard stats (rank, wins, losses, draws)."
+
+  attr :current_scope, :map,
+    required: true,
+    doc: "Current auth scope containing the user."
 
   def my_stats(assigns) do
     ~H"""

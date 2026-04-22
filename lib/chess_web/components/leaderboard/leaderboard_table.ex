@@ -1,8 +1,46 @@
 defmodule ChessWeb.Leaderboard.LeaderboardTable do
+  @moduledoc """
+  Provides a reusable component for rendering the leaderboard table.
+
+  This component displays a ranked list of players along with their game
+  statistics (wins, losses, draws). It highlights the current user and
+  visually distinguishes top-ranked players.
+  """
   use ChessWeb, :html
 
-  attr :players, :list, required: true
-  attr :current_user, :map, required: true
+  @doc """
+  Renders the leaderboard table.
+
+  Displays a list of players with ranking position, profile information,
+  and match statistics. The current user is visually highlighted, and the
+  top three players are marked with medal indicators.
+
+  ## Attributes
+
+    * `:players` - A list of player maps or structs. Each player is expected
+      to include:
+        * `:id`
+        * `:full_name`
+        * `:profile_image`
+        * `:wins`
+        * `:losses`
+        * `:draws`
+
+    * `:current_user` - The currently authenticated user map or struct.
+      Used to highlight the user's row in the leaderboard.
+
+  ## Examples
+
+      <.leaderboard_table players={@players} current_user={@current_user} />
+
+  """
+  attr :players, :list,
+    required: true,
+    doc: "List of players to display in the leaderboard."
+
+  attr :current_user, :map,
+    required: true,
+    doc: "Current user used for highlighting their row."
 
   def leaderboard_table(assigns) do
     ~H"""

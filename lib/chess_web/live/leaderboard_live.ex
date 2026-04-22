@@ -1,4 +1,13 @@
 defmodule ChessWeb.LeaderboardLive do
+  @moduledoc """
+  LiveView responsible for rendering and managing the leaderboard page.
+
+  This view displays a paginated list of top players along with the current
+  user's personal statistics. It supports incremental loading ("load more")
+  and handles multiple UI states including loading, error, and empty results.
+
+  Data is fetched asynchronously after mount to avoid blocking the initial render.
+  """
   use ChessWeb, :live_view
 
   import ChessWeb.Leaderboard.MyStats
@@ -11,6 +20,21 @@ defmodule ChessWeb.LeaderboardLive do
 
   @per_page 20
 
+  @doc """
+  Renders the leaderboard page.
+
+  Displays:
+    * Page title
+    * Current user's statistics
+    * Error or loading states when applicable
+    * Leaderboard table with players
+    * "Load more" control for pagination
+
+  The UI adapts dynamically based on the current assigns:
+    * `:loading` — shows loading state
+    * `:error` — shows error message
+    * `:players` — renders table or empty state
+  """
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -36,6 +60,21 @@ defmodule ChessWeb.LeaderboardLive do
     """
   end
 
+  @doc """
+  Initializes the LiveView socket with default state.
+
+  Sets up pagination, loading flags, and assigns the current user's ID.
+  Triggers asynchronous data loading via `:load_data` message.
+
+  ## Assigns initialized
+    * `:page` — current page number (default: 1)
+    * `:per_page` — number of players per page
+    * `:players` — list of leaderboard players
+    * `:my_stats` — current user's stats
+    * `:loading` — loading indicator
+    * `:error` — error message (if any)
+    * `:end_of_list` — indicates if all data has been loaded
+  """
   def mount(_params, _session, socket) do
     my_id = socket.assigns.current_scope.user.id
 
@@ -56,6 +95,18 @@ defmodule ChessWeb.LeaderboardLive do
     {:ok, socket}
   end
 
+  @doc """
+  Handles asynchronous data loading.
+
+  Fetches:
+    * Leaderboard players for the current page
+    * Current user's statistics
+
+  Updates the socket with the fetched data and determines whether the
+  end of the list has been reached.
+
+  In case of failure, sets an error message and disables loading state.
+  """
   def handle_info(:load_data, socket) do
     my_id = socket.assigns.current_scope.user.id
 
@@ -76,6 +127,11 @@ defmodule ChessWeb.LeaderboardLive do
     end
   end
 
+  @doc """
+  Handles the "load_more" event when no more data is available.
+
+  Returns the socket unchanged.
+  """
   def handle_event("load_more", _, %{assigns: %{end_of_list: true}} = socket) do
     {:noreply, socket}
   end
