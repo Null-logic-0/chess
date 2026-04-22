@@ -24,12 +24,12 @@ defmodule ChessWeb.UserLive.Settings do
       <.form
         for={@user_form}
         id="username_form"
-        phx-submit="update_username"
-        phx-change="validate_username"
+        phx-submit="update_name"
+        phx-change="validate_name"
       >
         <.input
           field={@user_form[:username]}
-          label="Username"
+          label="Full Name"
           autocomplete="username"
           spellcheck="false"
           required
@@ -87,14 +87,14 @@ defmodule ChessWeb.UserLive.Settings do
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    username_changeset = Accounts.change_user_username(user, %{}, validate_unique: false)
+    username_changeset = Accounts.change_user_name(user, %{}, validate_unique: false)
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
     profile_image_changeset = Accounts.change_user_profile_image(user, %{})
 
     socket =
       socket
       |> assign(:current_email, user.email)
-      |> assign(:page_title, "#{user.username}")
+      |> assign(:page_title, "#{user.full_name}")
       |> assign(:user_form, to_form(username_changeset))
       |> assign(:profile_image_form, to_form(profile_image_changeset))
       |> assign(:password_form, to_form(password_changeset))
@@ -110,29 +110,29 @@ defmodule ChessWeb.UserLive.Settings do
   end
 
   @impl true
-  def handle_event("validate_username", %{"user" => user_params}, socket) do
+  def handle_event("validate_name", %{"user" => user_params}, socket) do
     user_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_username(user_params, validate_unique: false)
+      |> Accounts.change_user_name(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
     {:noreply, assign(socket, user_form: user_form)}
   end
 
-  def handle_event("update_username", %{"user" => user_params}, socket) do
+  def handle_event("update_name", %{"user" => user_params}, socket) do
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.update_user_username(user, user_params) do
+    case Accounts.update_user_name(user, user_params) do
       {:ok, updated_user} ->
         socket =
           socket
           |> assign(
             current_scope: %{socket.assigns.current_scope | user: updated_user},
-            user_form: to_form(Accounts.change_user_username(updated_user, %{}))
+            user_form: to_form(Accounts.change_user_name(updated_user, %{}))
           )
-          |> put_flash(:info, "Username updated successfully.")
+          |> put_flash(:info, "Name updated successfully.")
 
         {:noreply, socket}
 
@@ -140,7 +140,7 @@ defmodule ChessWeb.UserLive.Settings do
         socket =
           socket
           |> assign(user_form: to_form(changeset))
-          |> put_flash(:error, "Username update failed.")
+          |> put_flash(:error, "Name update failed.")
 
         {:noreply, socket}
     end

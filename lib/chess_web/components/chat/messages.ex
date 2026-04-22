@@ -34,16 +34,16 @@ defmodule ChessWeb.Chat.Messages do
               <%= if message.user.profile_image do %>
                 <img
                   src={message.user.profile_image}
-                  alt={message.user.username}
+                  alt={message.user.full_name}
                   class="object-cover"
                 />
               <% else %>
-                {message.user.username |> String.upcase() |> String.slice(0, 2)}
+                {message.user.full_name |> String.upcase() |> String.slice(0, 2)}
               <% end %>
             </div>
           </div>
           <div class="chat-bubble chat-bubble-ghost text-base-content text-sm py-1.5 px-3">
-            <span class="text-xs block text-gray-400">{message.user.username}</span>
+            <span class="text-xs block text-gray-400">{message.user.full_name}</span>
             <hr class="my-1" />
             {message.content}
           </div>

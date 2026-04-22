@@ -77,8 +77,48 @@ defmodule Chess.Accounts do
   def register_user(attrs) do
     %User{}
     |> User.email_changeset(attrs)
-    |> Ecto.Changeset.merge(User.username_changeset(%User{}, attrs))
+    |> Ecto.Changeset.merge(User.name_changeset(%User{}, attrs))
     |> Repo.insert()
+  end
+
+  def increment_stat(user_id, field) when field in [:wins, :losses, :draws] do
+    from(u in User, where: u.id == ^user_id)
+    |> Repo.update_all(inc: [{field, 1}])
+  end
+
+  def get_leaderboard(page \\ 1, per_page \\ 20) do
+    offset = (page - 1) * per_page
+
+    from(u in User,
+      order_by: [desc: u.wins],
+      limit: ^per_page,
+      offset: ^offset,
+      select: %{
+        id: u.id,
+        full_name: u.full_name,
+        profile_image: u.profile_image,
+        wins: u.wins,
+        losses: u.losses,
+        draws: u.draws
+      }
+    )
+    |> Repo.all()
+  end
+
+  def get_user_stats(user_id) do
+    user = Repo.get(User, user_id)
+
+    rank =
+      from(u in User, where: u.wins > ^user.wins, select: count(u.id))
+      |> Repo.one()
+      |> Kernel.+(1)
+
+    %{
+      wins: user.wins,
+      losses: user.losses,
+      draws: user.draws,
+      rank: rank
+    }
   end
 
   ## Settings
@@ -115,8 +155,8 @@ defmodule Chess.Accounts do
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user username.
   """
-  def change_user_username(user, attrs \\ %{}, opts \\ []) do
-    User.username_changeset(user, attrs, opts)
+  def change_user_name(user, attrs \\ %{}, opts \\ []) do
+    User.name_changeset(user, attrs, opts)
   end
 
   @doc """
@@ -144,9 +184,9 @@ defmodule Chess.Accounts do
     Update the user username
   """
 
-  def update_user_username(user, attrs \\ %{}, opts \\ []) do
+  def update_user_name(user, attrs \\ %{}, opts \\ []) do
     user
-    |> User.username_changeset(attrs, opts)
+    |> User.name_changeset(attrs, opts)
     |> Repo.update()
   end
 

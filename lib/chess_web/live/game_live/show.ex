@@ -66,7 +66,7 @@ defmodule ChessWeb.GameLive.Show do
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-base-content truncate flex items-center gap-1.5">
-              {@current_scope.user.username}
+              {@current_scope.user.full_name}
               <span class="text-xs text-base-content/40 font-normal">(you)</span>
               <%= if @game.user_id == @my_id do %>
                 <span class="text-[10px] bg-base-300 text-base-content/60 px-1.5 py-0.5 rounded font-normal">
@@ -399,7 +399,7 @@ defmodule ChessWeb.GameLive.Show do
       if opponent_id do
         case Accounts.get_user(opponent_id) do
           nil -> {nil, "Opponent joined! Game starts now."}
-          user -> {user, "#{user.username} has joined! Game starts now."}
+          user -> {user, "#{user.full_name} has joined! Game starts now."}
         end
       else
         {nil, "Opponent joined! Game starts now."}
@@ -414,11 +414,25 @@ defmodule ChessWeb.GameLive.Show do
 
   def handle_info({:new_message, message}, socket) do
     send_update(ChessWeb.Chat.ChatLiveComponent, id: "chat", new_message: message)
+
+    socket =
+      if to_string(message.user_id) != to_string(socket.assigns.my_id) do
+        Process.send_after(self(), :clear_flash, 3000)
+
+        put_flash(
+          socket,
+          :info,
+          "#{message.user.full_name}: #{String.slice(message.content, 0, 60)}"
+        )
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
 
-  def handle_info({:flash, kind, message}, socket) do
-    {:noreply, put_flash(socket, kind, message)}
+  def handle_info(:clear_flash, socket) do
+    {:noreply, clear_flash(socket)}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
@@ -506,14 +520,15 @@ defmodule ChessWeb.GameLive.Show do
   end
 
   defp opponent_name(nil), do: "Waiting for opponent..."
-  defp opponent_name(%{username: username}), do: username
+  defp opponent_name(%{full_name: full_name}), do: full_name
 
   defp opponent_initials(nil), do: "?"
 
-  defp opponent_initials(%{username: username}),
-    do: username |> String.upcase() |> String.slice(0, 2)
+  defp opponent_initials(%{full_name: full_name}),
+    do: full_name |> String.upcase() |> String.slice(0, 2)
 
-  defp user_initials(%{username: username}), do: username |> String.upcase() |> String.slice(0, 2)
+  defp user_initials(%{full_name: full_name}),
+    do: full_name |> String.upcase() |> String.slice(0, 2)
 
   defp my_color_label(:white), do: "White"
   defp my_color_label(:black), do: "Black"

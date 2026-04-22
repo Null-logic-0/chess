@@ -21,6 +21,7 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
      socket
      |> assign(:message_form, to_form(%{}))
      |> assign(:messages_count, 0)
+     |> assign(:last_flash_id, nil)
      |> stream(:messages, [])}
   end
 
@@ -28,15 +29,7 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
     {:ok,
      socket
      |> stream_insert(:messages, message)
-     |> update(:messages_count, &(&1 + 1))
-     |> then(fn socket ->
-       if to_string(message.user_id) != socket.assigns.my_id do
-         send(self(), {:flash, :info, "#{message.user.username}: #{preview(message.content)}"})
-         socket
-       else
-         socket
-       end
-     end)}
+     |> update(:messages_count, &(&1 + 1))}
   end
 
   def update(%{game: game, my_id: my_id, current_scope: current_scope}, socket) do
@@ -68,11 +61,5 @@ defmodule ChessWeb.Chat.ChatLiveComponent do
       {:error, _} ->
         {:noreply, socket}
     end
-  end
-
-  defp preview(content, max \\ 100) do
-    if String.length(content) > max,
-      do: String.slice(content, 0, max) <> "…",
-      else: content
   end
 end

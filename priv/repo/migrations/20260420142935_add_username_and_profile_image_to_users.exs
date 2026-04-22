@@ -3,10 +3,8 @@ defmodule Chess.Repo.Migrations.AddUsernameAndProfileImageToUsers do
 
   def change do
     alter table(:users) do
-      add :username, :string
+      add :full_name, :string
       add :profile_image, :string
     end
-
-    create unique_index(:users, [:username])
   end
 end

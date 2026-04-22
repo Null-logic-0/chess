@@ -34,11 +34,17 @@ defmodule ChessWeb.NavMenu do
       <.user_dropdown current_scope={@current_scope}>
         <%= if @current_scope do %>
           <li class="text-center pb-2">
-            {@current_scope.user.username}
+            {@current_scope.user.full_name}
           </li>
           <hr />
 
           <li class="pt-2 font-sm font-medium hover:text-primary transition-colors">
+            <.link navigate={~p"/leaderboard"}>
+              Leaderboard
+            </.link>
+          </li>
+
+          <li class="font-sm font-medium hover:text-primary transition-colors">
             <.link navigate={~p"/users/settings"}>Settings</.link>
           </li>
 

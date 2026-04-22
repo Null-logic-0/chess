@@ -9,6 +9,7 @@ defmodule Chess.Games do
   alias Chess.Games.Game
   alias Chess.ChessEngine
   alias Chess.Accounts.Scope
+  alias Chess.Accounts
 
   @doc """
   Subscribes to scoped notifications about any game changes.
@@ -121,13 +122,18 @@ defmodule Chess.Games do
             :playing -> "playing"
           end
 
-        game
-        |> Game.state_changeset(%{
-          fen: new_fen,
-          moves: game.moves ++ [uci_move],
-          status: status
-        })
-        |> Repo.update()
+        changeset =
+          game
+          |> Game.state_changeset(%{
+            fen: new_fen,
+            moves: game.moves ++ [uci_move],
+            status: status
+          })
+
+        with {:ok, updated_game} <- Repo.update(changeset) do
+          if status != "playing", do: update_player_stats(updated_game)
+          {:ok, updated_game}
+        end
 
       {:error, reason} ->
         {:error, reason}
@@ -170,6 +176,38 @@ defmodule Chess.Games do
       status: status
     })
     |> Repo.update()
+  end
+
+  def update_player_stats(%Game{status: status, white_id: white_id, black_id: black_id})
+      when status in [
+             "checkmate",
+             "timeout_white_wins",
+             "timeout_black_wins",
+             "resigned_white_wins",
+             "resigned_black_wins",
+             "draw"
+           ] do
+    {winner_id, loser_id} =
+      case status do
+        s when s in ["checkmate", "timeout_white_wins", "resigned_white_wins"] ->
+          {white_id, black_id}
+
+        s when s in ["timeout_black_wins", "resigned_black_wins"] ->
+          {black_id, white_id}
+
+        "draw" ->
+          {nil, nil}
+      end
+
+    case status do
+      "draw" ->
+        Accounts.increment_stat(white_id, :draws)
+        Accounts.increment_stat(black_id, :draws)
+
+      _ ->
+        Accounts.increment_stat(winner_id, :wins)
+        Accounts.increment_stat(loser_id, :losses)
+    end
   end
 
   @doc """

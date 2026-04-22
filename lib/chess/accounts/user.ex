@@ -4,12 +4,15 @@ defmodule Chess.Accounts.User do
 
   schema "users" do
     field :email, :string
-    field :username, :string
+    field :full_name, :string
     field :profile_image, :string, default: "/images/default.png"
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :wins, :integer, default: 0
+    field :losses, :integer, default: 0
+    field :draws, :integer, default: 0
 
     has_many :games, Chess.Games.Game
 
@@ -137,12 +140,11 @@ defmodule Chess.Accounts.User do
   @doc """
   Changeset for username
   """
-  def username_changeset(user, attrs, _opts \\ []) do
+  def name_changeset(user, attrs, _opts \\ []) do
     user
     |> cast(attrs, [:username])
     |> validate_required([:username])
     |> validate_length(:username, min: 3, max: 32)
-    |> unique_constraint(:username)
   end
 
   @doc """
