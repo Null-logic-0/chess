@@ -52,7 +52,7 @@ defmodule ChessWeb.Router do
 
     live_session :authenticated_user,
       on_mount: [{ChessWeb.UserAuth, :require_authenticated}] do
-      live "/:slug",GameLive.Show
+      live "/:slug", GameLive.Show
     end
   end
 

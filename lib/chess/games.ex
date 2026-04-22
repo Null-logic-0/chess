@@ -7,6 +7,7 @@ defmodule Chess.Games do
   alias Chess.Repo
 
   alias Chess.Games.Game
+  alias Chess.ChessEngine
   alias Chess.Accounts.Scope
 
   @doc """
@@ -82,14 +83,93 @@ defmodule Chess.Games do
       {:error, %Ecto.Changeset{}}
 
   """
+
+  # def create_game(%Scope{} = scope, attrs \\ %{}) do
+  #   with {:ok, game = %Game{}} <-
+  #          %Game{}
+  #          |> Game.changeset(attrs, scope)
+  #          |> Repo.insert() do
+  #     broadcast_game(scope, {:created, game})
+  #     {:ok, game}
+  #   end
+  # end
+
   def create_game(%Scope{} = scope, attrs \\ %{}) do
     with {:ok, game = %Game{}} <-
            %Game{}
-           |> Game.changeset(attrs, scope)
+           |> Game.changeset(Map.merge(attrs, %{"white_id" => scope.user.id}), scope)
            |> Repo.insert() do
       broadcast_game(scope, {:created, game})
       {:ok, game}
     end
+  end
+
+  def join_as_black(game, user_id) do
+    game
+    |> Game.state_changeset(%{black_id: user_id})
+    |> Repo.update()
+  end
+
+  @doc "Apply a UCI move to a game, persist it, return updated game."
+  def apply_move(game, uci_move) do
+    case ChessEngine.apply_move(game.fen, uci_move) do
+      {:ok, new_fen} ->
+        status =
+          case ChessEngine.game_status(new_fen) do
+            :checkmate -> "checkmate"
+            {:draw, _} -> "draw"
+            :playing -> "playing"
+          end
+
+        game
+        |> Game.state_changeset(%{
+          fen: new_fen,
+          moves: game.moves ++ [uci_move],
+          status: status
+        })
+        |> Repo.update()
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Get legal move destinations for a piece on a given square."
+  def legal_moves_from(game, square) do
+    ChessEngine.legal_moves_from(game.fen, square)
+  end
+
+  def join_as_white(game, user_id) do
+    game
+    |> Game.state_changeset(%{white_id: user_id})
+    |> Repo.update()
+  end
+
+  @doc "Resign a game."
+  def resign(game, player_color) do
+    winner = if player_color == :white, do: "black_wins", else: "white_wins"
+
+    game
+    |> Game.state_changeset(%{status: "resigned_#{winner}"})
+    |> Repo.update()
+  end
+
+  @doc "Declare an immediate draw."
+  def declare_draw(game) do
+    game
+    |> Game.state_changeset(%{status: "draw"})
+    |> Repo.update()
+  end
+
+  @doc "Update clock times and status (called every tick)."
+  def update_game_times(game, white_ms, black_ms, status) do
+    game
+    |> Game.state_changeset(%{
+      white_time_ms: max(white_ms, 0),
+      black_time_ms: max(black_ms, 0),
+      status: status
+    })
+    |> Repo.update()
   end
 
   @doc """

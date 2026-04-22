@@ -26,12 +26,13 @@ import { hooks as colocatedHooks } from "phoenix-colocated/chess"
 import topbar from "../vendor/topbar"
 import ChatInput from "./chat/chatInput"
 import ChatScroll from "./chat/chatScroll"
+import CopyToClipboard from "./copyToClipboard"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: { ChatInput, ChatScroll, ...colocatedHooks },
+  hooks: { ChatInput, ChatScroll, CopyToClipboard, ...colocatedHooks },
 })
 
 // Show progress bar on live navigation and form submits

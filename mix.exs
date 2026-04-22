@@ -21,7 +21,7 @@ defmodule Chess.MixProject do
   def application do
     [
       mod: {Chess.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :binbo]
     ]
   end
 
@@ -66,7 +66,8 @@ defmodule Chess.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:binbo, "~> 1.2"}
     ]
   end
 
