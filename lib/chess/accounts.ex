@@ -81,6 +81,8 @@ defmodule Chess.Accounts do
     |> Repo.insert()
   end
 
+  def increment_stat(nil, _stat), do: :ok
+
   def increment_stat(user_id, field) when field in [:wins, :losses, :draws] do
     from(u in User, where: u.id == ^user_id)
     |> Repo.update_all(inc: [{field, 1}])

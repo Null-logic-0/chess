@@ -138,13 +138,13 @@ defmodule Chess.Accounts.User do
   end
 
   @doc """
-  Changeset for username
+  Changeset for user full_name
   """
   def name_changeset(user, attrs, _opts \\ []) do
     user
-    |> cast(attrs, [:username])
-    |> validate_required([:username])
-    |> validate_length(:username, min: 3, max: 32)
+    |> cast(attrs, [:full_name])
+    |> validate_required([:full_name])
+    |> validate_length(:full_name, min: 3, max: 32)
   end
 
   @doc """

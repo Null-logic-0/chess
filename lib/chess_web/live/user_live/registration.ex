@@ -34,9 +34,9 @@ defmodule ChessWeb.UserLive.Registration do
           />
 
           <.input
-            field={@form[:username]}
-            label="Username"
-            placeholder="Enter your username"
+            field={@form[:full_name]}
+            label="Full Name"
+            placeholder="Enter your full name"
             spellcheck="false"
             required
           />

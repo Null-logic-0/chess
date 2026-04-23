@@ -14,7 +14,8 @@ defmodule Chess.AccountsFixtures do
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email()
+      email: unique_user_email(),
+      full_name: "Test"
     })
   end
 

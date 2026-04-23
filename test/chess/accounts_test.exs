@@ -35,29 +35,26 @@ defmodule Chess.AccountsTest do
     end
   end
 
-  describe "get_user!/1" do
-    test "raises if id is invalid" do
-      assert_raise Ecto.NoResultsError, fn ->
-        Accounts.get_user!(-1)
-      end
+  # get_user!/1 does not exist — the module only defines get_user/1 (returns nil, not raising)
+  describe "get_user/1" do
+    test "returns nil for an unknown id" do
+      assert Accounts.get_user(-1) == nil
     end
 
     test "returns the user with the given id" do
       %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Accounts.get_user!(user.id)
+      assert %User{id: ^id} = Accounts.get_user(user.id)
     end
   end
 
   describe "register_user/1" do
     test "requires email to be set" do
       {:error, changeset} = Accounts.register_user(%{})
-
       assert %{email: ["can't be blank"]} = errors_on(changeset)
     end
 
     test "validates email when given" do
       {:error, changeset} = Accounts.register_user(%{email: "not valid"})
-
       assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
     end
 
@@ -72,7 +69,6 @@ defmodule Chess.AccountsTest do
       {:error, changeset} = Accounts.register_user(%{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
-      # Now try with the uppercased email too, to check that email case is ignored.
       {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
       assert "has already been taken" in errors_on(changeset).email
     end
@@ -87,6 +83,96 @@ defmodule Chess.AccountsTest do
     end
   end
 
+  describe "increment_stat/2" do
+    test "increments wins" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :wins)
+      assert Accounts.get_user(user.id).wins == 1
+    end
+
+    test "increments losses" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :losses)
+      assert Accounts.get_user(user.id).losses == 1
+    end
+
+    test "increments draws" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :draws)
+      assert Accounts.get_user(user.id).draws == 1
+    end
+
+    test "is a no-op for nil user_id" do
+      assert Accounts.increment_stat(nil, :wins) == :ok
+    end
+
+    test "accumulates across multiple calls" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :wins)
+      Accounts.increment_stat(user.id, :wins)
+      assert Accounts.get_user(user.id).wins == 2
+    end
+  end
+
+  describe "get_leaderboard/2" do
+    test "returns a list of user stat maps" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :wins)
+
+      leaderboard = Accounts.get_leaderboard()
+      assert is_list(leaderboard)
+
+      entry = Enum.find(leaderboard, &(&1.id == user.id))
+      assert entry.wins == 1
+      assert Map.has_key?(entry, :full_name)
+      assert Map.has_key?(entry, :losses)
+      assert Map.has_key?(entry, :draws)
+    end
+
+    test "orders by wins descending" do
+      u1 = user_fixture()
+      u2 = user_fixture()
+
+      Accounts.increment_stat(u2.id, :wins)
+      Accounts.increment_stat(u2.id, :wins)
+      Accounts.increment_stat(u1.id, :wins)
+
+      leaderboard = Accounts.get_leaderboard()
+      ids = Enum.map(leaderboard, & &1.id)
+
+      assert Enum.find_index(ids, &(&1 == u2.id)) <
+               Enum.find_index(ids, &(&1 == u1.id))
+    end
+
+    test "respects per_page limit" do
+      for _ <- 1..5, do: user_fixture()
+      leaderboard = Accounts.get_leaderboard(1, 2)
+      assert length(leaderboard) <= 2
+    end
+  end
+
+  describe "get_user_stats/1" do
+    test "returns wins, losses, draws, and rank" do
+      user = user_fixture()
+      stats = Accounts.get_user_stats(user.id)
+
+      assert Map.keys(stats) |> Enum.sort() == [:draws, :losses, :rank, :wins]
+      assert stats.wins == 0
+      assert stats.losses == 0
+      assert stats.draws == 0
+      assert is_integer(stats.rank)
+    end
+
+    test "rank is 1 when user has more wins than all others" do
+      user = user_fixture()
+      Accounts.increment_stat(user.id, :wins)
+      Accounts.increment_stat(user.id, :wins)
+
+      stats = Accounts.get_user_stats(user.id)
+      assert stats.rank == 1
+    end
+  end
+
   describe "sudo_mode?/2" do
     test "validates the authenticated_at time" do
       now = DateTime.utc_now()
@@ -95,13 +181,11 @@ defmodule Chess.AccountsTest do
       assert Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -19, :minute)})
       refute Accounts.sudo_mode?(%User{authenticated_at: DateTime.add(now, -21, :minute)})
 
-      # minute override
       refute Accounts.sudo_mode?(
                %User{authenticated_at: DateTime.add(now, -11, :minute)},
                -10
              )
 
-      # not authenticated
       refute Accounts.sudo_mode?(%User{})
     end
   end
@@ -110,6 +194,43 @@ defmodule Chess.AccountsTest do
     test "returns a user changeset" do
       assert %Ecto.Changeset{} = changeset = Accounts.change_user_email(%User{})
       assert changeset.required == [:email]
+    end
+  end
+
+  describe "change_user_name/3" do
+    test "returns a changeset" do
+      assert %Ecto.Changeset{} = Accounts.change_user_name(%User{})
+    end
+  end
+
+  describe "update_user_name/3" do
+    test "updates full_name" do
+      user = user_fixture()
+      assert {:ok, updated} = Accounts.update_user_name(user, %{full_name: "New Name"})
+      assert updated.full_name == "New Name"
+    end
+
+    test "persists to database" do
+      user = user_fixture()
+      Accounts.update_user_name(user, %{full_name: "Persisted Name"})
+      assert Accounts.get_user(user.id).full_name == "Persisted Name"
+    end
+  end
+
+  describe "change_user_profile_image/2" do
+    test "returns a changeset" do
+      user = user_fixture()
+      assert %Ecto.Changeset{} = Accounts.change_user_profile_image(user)
+    end
+  end
+
+  describe "upload_profile_image/2" do
+    test "updates the profile_image field" do
+      user = user_fixture()
+      url = "/uploads/avatar.jpg"
+
+      assert {:ok, updated} = Accounts.upload_profile_image(user, %{profile_image: url})
+      assert updated.profile_image == url
     end
   end
 
@@ -154,9 +275,7 @@ defmodule Chess.AccountsTest do
     end
 
     test "does not update email with invalid token", %{user: user} do
-      assert Accounts.update_user_email(user, "oops") ==
-               {:error, :transaction_aborted}
-
+      assert Accounts.update_user_email(user, "oops") == {:error, :transaction_aborted}
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
@@ -171,10 +290,7 @@ defmodule Chess.AccountsTest do
 
     test "does not update email if token expired", %{user: user, token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-
-      assert Accounts.update_user_email(user, token) ==
-               {:error, :transaction_aborted}
-
+      assert Accounts.update_user_email(user, token) == {:error, :transaction_aborted}
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
@@ -188,11 +304,7 @@ defmodule Chess.AccountsTest do
 
     test "allows fields to be set" do
       changeset =
-        Accounts.change_user_password(
-          %User{},
-          %{
-            "password" => "new valid password"
-          },
+        Accounts.change_user_password(%User{}, %{"password" => "new valid password"},
           hash_password: false
         )
 
@@ -222,18 +334,13 @@ defmodule Chess.AccountsTest do
 
     test "validates maximum values for password for security", %{user: user} do
       too_long = String.duplicate("db", 100)
-
-      {:error, changeset} =
-        Accounts.update_user_password(user, %{password: too_long})
-
+      {:error, changeset} = Accounts.update_user_password(user, %{password: too_long})
       assert "should be at most 72 character(s)" in errors_on(changeset).password
     end
 
     test "updates the password", %{user: user} do
       {:ok, {user, expired_tokens}} =
-        Accounts.update_user_password(user, %{
-          password: "new valid password"
-        })
+        Accounts.update_user_password(user, %{password: "new valid password"})
 
       assert expired_tokens == []
       assert is_nil(user.password)
@@ -243,10 +350,7 @@ defmodule Chess.AccountsTest do
     test "deletes all tokens for the given user", %{user: user} do
       _ = Accounts.generate_user_session_token(user)
 
-      {:ok, {_, _}} =
-        Accounts.update_user_password(user, %{
-          password: "new valid password"
-        })
+      {:ok, {_, _}} = Accounts.update_user_password(user, %{password: "new valid password"})
 
       refute Repo.get_by(UserToken, user_id: user.id)
     end
@@ -263,7 +367,6 @@ defmodule Chess.AccountsTest do
       assert user_token.context == "session"
       assert user_token.authenticated_at != nil
 
-      # Creating the same token for another user should fail
       assert_raise Ecto.ConstraintError, fn ->
         Repo.insert!(%UserToken{
           token: user_token.token,
@@ -346,7 +449,6 @@ defmodule Chess.AccountsTest do
       assert user.confirmed_at
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
       assert {:ok, {^user, []}} = Accounts.login_user_by_magic_link(encoded_token)
-      # one time use only
       assert {:error, :not_found} = Accounts.login_user_by_magic_link(encoded_token)
     end
 

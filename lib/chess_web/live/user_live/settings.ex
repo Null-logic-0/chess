@@ -28,10 +28,9 @@ defmodule ChessWeb.UserLive.Settings do
         phx-change="validate_name"
       >
         <.input
-          field={@user_form[:username]}
+          field={@user_form[:full_name]}
           label="Full Name"
-          autocomplete="username"
-          spellcheck="false"
+          autocomplete="full_name"
           required
         />
         <.input

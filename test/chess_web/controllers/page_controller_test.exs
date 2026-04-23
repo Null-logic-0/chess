@@ -3,6 +3,8 @@ defmodule ChessWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+    assert html_response(conn, 200) =~ "Welcome to ChessHub"
+    assert html_response(conn, 200) =~ "Play Chess Online with your Firends and Family!"
+    assert html_response(conn, 200) =~ "ChessHub"
   end
 end

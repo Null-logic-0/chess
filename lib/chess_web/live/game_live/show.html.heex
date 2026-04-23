@@ -1,0 +1,45 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="flex flex-col gap-3">
+    <.player_card
+      user={@opponent}
+      initials={Helpers.opponent_initials(@opponent)}
+      is_me={false}
+      is_creator={@opponent && @game.user_id == @opponent.id}
+      color_label={Helpers.opponent_color_label(@my_color)}
+      is_active={@opponent && @active_color != @my_color && @game.status == "playing"}
+      time={Helpers.format_time(Helpers.opponent_time_ms(@my_color, @white_ms, @black_ms))}
+    />
+
+    <div class="relative w-full">
+      <ChessWeb.BoardComponent.board
+        fen={@game.fen}
+        selected={@selected}
+        hints={@hints}
+        flipped={@flipped}
+      />
+    </div>
+
+    <.player_card
+      user={@current_scope.user}
+      initials={Helpers.user_initials(@current_scope.user)}
+      is_me={true}
+      is_creator={@game.user_id == @my_id}
+      color_label={Helpers.my_color_label(@my_color)}
+      is_active={@active_color == @my_color && @game.status == "playing"}
+      time={Helpers.format_time(Helpers.my_time_ms(@my_color, @white_ms, @black_ms))}
+    />
+
+    <.action_buttons game={@game} />
+    <.status_banner game={@game} />
+    <.share_link opponent={@opponent} game={@game} game_url={@game_url} copied={@copied} />
+    <.move_log game={@game} />
+
+    <.live_component
+      module={ChessWeb.Chat.ChatLiveComponent}
+      id="chat"
+      game={@game}
+      my_id={@my_id}
+      current_scope={@current_scope}
+    />
+  </div>
+</Layouts.app>
