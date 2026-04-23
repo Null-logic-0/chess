@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>♞ Chess</h1>
+  <h1>♞ ChessHub </h1>
   <p><strong>A real-time, highly concurrent Chess application built with Elixir and the Phoenix Framework.</strong></p>
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
