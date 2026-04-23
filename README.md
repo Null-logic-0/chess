@@ -15,6 +15,21 @@ Welcome to **Chess**, a robust and scalable web-based chess application. By leve
 
 --- 
 
+## 🕹️ Game Demo
+
+https://github.com/user-attachments/assets/dca472c1-ee3a-4772-bb1f-7d6fc130cde5
+
+
+https://github.com/user-attachments/assets/dda0d856-5208-4253-9ce5-b4281954ad30
+
+
+
+https://github.com/user-attachments/assets/55b26f43-4d15-4ad8-80e8-40b710796438
+
+
+
+---
+
 ## ✨ Features
 
 - **Real-Time Gameplay:** Lightning-fast move synchronization with zero noticeable latency, powered by Phoenix WebSockets / LiveView.
@@ -92,13 +107,13 @@ and navigate to **http://localhost:4000**.
 
 ---
 
-# 🌍 Deployment
+## 🌍 Deployment
 
 Ready to take this application live? The Phoenix framework makes deployment straightforward. Please refer to the **[official deployment guides](https://hexdocs.pm/phoenix/deployment.html)** to best prepare your app for a production environment.
 
 ---
 
-# 🤝 Contributing
+## 🤝 Contributing
 
 Contributions, issues, and feature requests are always welcome!
 Feel free to check the **issues page**. If you'd like to contribute code, please fork the repository, create a feature branch, and submit a pull request.
@@ -106,7 +121,7 @@ Feel free to check the **issues page**. If you'd like to contribute code, please
 
 ---
 
-# 📄 License
+## 📄 License
 
 This project is open-source and licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
